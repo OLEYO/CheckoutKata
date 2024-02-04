@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Channels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CheckoutKata.Tests
 {
@@ -59,13 +61,21 @@ namespace CheckoutKata.Tests
             var checkout = new Checkout(pricingRules);
 
             // Act
-            checkout.Scan("B");
-            int totalPrice = checkout.GetTotalPrice();
+            using (StringWriter sw = new StringWriter())
+            {
+                Console.SetOut(sw); // Redirect console output
+                checkout.Scan("B");
+                int totalPrice = checkout.GetTotalPrice();
 
-            // Assert
-            // Validate that the warning message is written to the console
-            StringAssert.Contains("Warning: Item 'B' not found in pricing rules.", Console.Out.ToString());
-            Assert.AreEqual(0, totalPrice);
+
+                /*fixed issue where test could not check console. 
+                 * Changed the way i format the console output to string and changed form stringassert to isTrue with .Contains() enclosed within it.*/
+
+                // Assert
+                // Validate that the warning message is written to the console
+                Assert.IsTrue(sw.ToString().Contains("Error: Item 'B' not found in pricing rules"));
+                Assert.AreEqual(0, totalPrice);
+            }
         }
 
         [TestMethod]
